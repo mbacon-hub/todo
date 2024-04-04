@@ -1,0 +1,54 @@
+version: "3.8"
+services:
+
+  #php-fpm
+  php-fpm:
+    build:
+      context: ./php/
+      dockerfile: Dockerfile
+    container_name: ${APP_NAME}_php
+    restart: on-failure
+    tty: true
+    volumes:
+      - ./app:/var/www
+    networks:
+      - common
+
+  #nginx
+  nginx:
+    image: nginx:latest
+    container_name: ${APP_NAME}_nginx
+    restart: on-failure
+    tty: true
+    ports:
+      - '80:80'
+    volumes:
+      - ./nginx/conf.d/:/etc/nginx/conf.d/
+      - ./app:/var/www
+    networks:
+      - common
+
+  #database
+  postgres:
+      image: postgres:latest
+      container_name: ${APP_NAME}_postgres
+      restart: on-failure
+      tty: true
+      ports:
+          - "5432:5432"
+      environment:
+          - POSTGRES_DB=${DB_DATABASE}
+          - POSTGRES_USER=${DB_USERNAME}
+          - POSTGRES_PASSWORD=${DB_PASSWORD}
+      volumes:
+          - database:/var/lib/postgresql/data
+      networks:
+          - common
+
+networks:
+  common:
+    driver: bridge
+
+volumes:
+ database:
+  name: ${APP_NAME}-${DB_CONNECTION}
